@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIALEX allocation adherence assessment form DRAFT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+        }
+        input, select, textarea, button {
+            width: 100%;
+            margin-top: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .highlighted {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #007bff;
+            border: 2px solid #007bff;
+            text-align: center;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .hidden {
+            display: none;
+        }
+        .indent {
+            margin-left: 20px;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 5px;
+            display: none;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+        .modal-title {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .modal-body {
+            margin: 15px 0;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .modal-actions button {
+            width: auto;
+            padding: 10px 20px;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .data-row {
+            margin: 10px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .data-label {
+            font-weight: bold;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<h1><center>DIALEX allocation adherence assessment form DRAFT</center></h1>
+
+<form id="adherence-form">
+    <!-- Participant Study ID -->
+    <label for="study-id">Participant Study ID</label>
+    <select id="study-id" name="study-id" required onchange="updateDialyzerAllocation(this.value)">
+        <option value="" disabled selected>Select Study ID</option>
+        <option value="1001">1000001</option>
+        <option value="1002">1000002</option>
+        <option value="1003">1000003</option>
+        <option value="1004">1000004</option>
+    </select>
+
+    <!-- Study allocation -->
+    <label for="study-allocation">Study-allocated dialyzer</label>
+    <div id="study-allocation" class="highlighted">
+        Please select a participant to display allocation.
+    </div>
+
+    <!-- Date of Assessment -->
+    <label for="assessment-date">Date of assessment</label>
+    <input type="date" id="assessment-date" name="assessment-date" required max="">
+    <div id="assessment-date-error" class="error-message">Assessment date cannot be in the future</div>
+    <button type="button" onclick="setToday()">Today</button>
+
+    <!-- Is the patient receiving in-centre (main or satellite unit) hemodialysis with the study-allocated dialyzer? -->
+    <label for="allocated-dialyzer">Is the patient receiving in-centre (main or satellite unit) hemodialysis with the study-allocated dialyzer?</label>
+    <select id="allocated-dialyzer" name="allocated-dialyzer" onchange="handleDialyzerChange(this.value)" required>
+        <option value="" disabled selected>Select</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+    </select>
+
+    <!-- Treatment History Question -->
+    <div id="treatment-history" class="hidden">
+        <label for="ever-treated">Did the patient ever receive in-centre (main or satellite unit) hemodialysis with the study-allocated dialyzer after randomization?</label>
+        <select id="ever-treated" name="ever-treated" onchange="handleEverTreatedChange(this.value)">
+            <option value="" disabled selected>Select</option>
+            <option value="yes">Yes, but discontinued</option>
+            <option value="no">No, never treated</option>
+        </select>
+    </div>
+
+    <!-- Reason Section -->
+    <div id="reason-section" class="hidden indent">
+        <label for="reason-select">Select the reason:</label>
+        <select id="reason-select" name="reason-select" onchange="handleReasonChange(this.value)">
+            <option value="" disabled selected>Select Reason</option>
+            <option value="transplant">Transplant</option>
+            <option value="change-pd">Changed to peritoneal dialysis</option>
+            <option value="change-home-hd">Changed to home hemodialysis</option>
+            <option value="change-nocturnal">Changed to nocturnal hemodialysis</option>
+            <option value="change-hdf">Changed to hemodiafiltration or hemofiltration</option>
+            <option value="recovered">Patient recovered kidney function</option>
+            <option value="declined">Patient declined study-allocated dialyzer</option>
+            <option value="left-country">Patient left the country</option>
+            <option value="died">Patient died</option>
+            <option value="refused">Patient refused dialysis</option>
+            <option value="changed-unit">Patient changed dialysis unit</option>
+            <option value="reaction">Dialyzer reaction</option>
+            <option value="enrollment-error">Enrollment error</option>
+            <option value="no-reason">No obvious reason indicated</option>
+            <option value="other">Other</option>
+        </select>
+        
+        <div id="other-reason" class="hidden">
+            <label for="other-reason-input">Please specify:</label>
+            <input type="text" id="other-reason-input" name="other-reason-input">
+        </div>
+    </div>
+
+    <!-- Last Treatment Date -->
+    <div id="last-treatment-date" class="hidden indent">
+        <label for="treatment-date">Last known date of treatment with the study-allocated dialyzer</label>
+        <input type="date" id="treatment-date" name="treatment-date">
+    </div>
+
+    <!-- Comments -->
+    <label for="comments">Comments</label>
+    <textarea id="comments" name="comments" rows="4" placeholder="Provide additional details if needed..."></textarea>
+
+    <!-- Submit -->
+    <button type="submit">Submit</button>
+</form>
+
+<!-- Confirmation Modal -->
+<div id="confirmationModal" class="modal">
+    <div class="modal-content">
+        <h2 class="modal-title">Confirm Submission</h2>
+        <div class="modal-body" id="modalBody">
+            <!-- Data will be inserted here -->
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal()">Edit</button>
+            <button onclick="confirmSubmission()">Confirm & Submit</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dialyzerAllocation = {
+        "1001": "Conventional high-flux dialyzer",
+        "1002": "Elisio HX dialyzer",
+        "1003": "Conventional high-flux dialyzer",
+        "1004": "Elisio HX dialyzer"
+    };
+
+    // Set the maximum date to today
+    function setMaxDate() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const maxDate = `${yyyy}-${mm}-${dd}`;
+        
+        const assessmentDateInput = document.getElementById('assessment-date');
+        assessmentDateInput.setAttribute('max', maxDate);
+        
+        return maxDate;
+    }
+
+    // Set today's date
+    function setToday() {
+        const maxDate = setMaxDate();
+        document.getElementById('assessment-date').value = maxDate;
+        document.getElementById('assessment-date-error').style.display = 'none';
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        setMaxDate();
+    });
+
+    function updateDialyzerAllocation(studyId) {
+        const allocationBox = document.getElementById('study-allocation');
+        allocationBox.textContent = dialyzerAllocation[studyId] || "Please select a participant to display allocation.";
+    }
+
+    function handleDialyzerChange(value) {
+        const treatmentHistory = document.getElementById('treatment-history');
+        const everTreated = document.getElementById('ever-treated');
+        const reasonSection = document.getElementById('reason-section');
+        const lastTreatmentDate = document.getElementById('last-treatment-date');
+
+        if (value === 'no') {
+            treatmentHistory.classList.remove('hidden');
+            everTreated.setAttribute('required', true);
+        } else {
+            treatmentHistory.classList.add('hidden');
+            everTreated.removeAttribute('required');
+            reasonSection.classList.add('hidden');
+            lastTreatmentDate.classList.add('hidden');
+            everTreated.value = '';
+            document.getElementById('reason-select').value = '';
+            document.getElementById('treatment-date').value = '';
+        }
+    }
+
+    function handleEverTreatedChange(value) {
+        const reasonSection = document.getElementById('reason-section');
+        const lastTreatmentDate = document.getElementById('last-treatment-date');
+        const reasonSelect = document.getElementById('reason-select');
+        const treatmentDate = document.getElementById('treatment-date');
+        
+        reasonSection.classList.remove('hidden');
+        reasonSelect.setAttribute('required', true);
+        
+        if (value === 'yes') {
+            lastTreatmentDate.classList.remove('hidden');
+            treatmentDate.setAttribute('required', true);
+        } else {
+            lastTreatmentDate.classList.add('hidden');
+            treatmentDate.removeAttribute('required');
+            treatmentDate.value = '';
+        }
+    }
+
+    function handleReasonChange(value) {
+        const otherReasonInput = document.getElementById('other-reason');
+        const otherReasonText = document.getElementById('other-reason-input');
+        
+        if (value === 'other') {
+            otherReasonInput.classList.remove('hidden');
+            otherReasonText.setAttribute('required', true);
+        } else {
+            otherReasonInput.classList.add('hidden');
+            otherReasonText.removeAttribute('required');
+            otherReasonText.value = '';
+        }
+    }
+
+    function showModal() {
+        const modalBody = document.getElementById('modalBody');
+        const form = document.getElementById('adherence-form');
+        const studyId = form['study-id'].value;
+        const allocation = dialyzerAllocation[studyId];
+        const assessmentDate = new Date(form['assessment-date'].value).toLocaleDateString();
+        const currentTreatment = form['allocated-dialyzer'].value === 'yes' ? 'Yes' : 'No';
+        
+        let html = `
+            <div class="data-row">
+                <div class="data-label">Study ID:</div>
+                <div>${studyId} (${allocation})</div>
+            </div>
+            <div class="data-row">
+                <div class="data-label">Assessment date:</div>
+                <div>${assessmentDate}</div>
+            </div>
+            <div class="data-row">
+                <div class="data-label">Currently receiving hemodialysis with allocated dialyzer:</div>
+                <div>${currentTreatment}</div>
+            </div>
+        `;
+
+        if (currentTreatment === 'No') {
+            const everTreated = form['ever-treated'].value === 'yes' ? 'Yes, but discontinued' : 'No, never treated';
+            const reason = form['reason-select'].value;
+            const reasonText = reason === 'other' ? form['other-reason-input'].value : 
+                             document.querySelector(`#reason-select option[value="${reason}"]`).textContent;
+            
+            html += `
+                <div class="data-row">
+                    <div class="data-label">Treatment History:</div>
+                    <div>${everTreated}</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">Reason:</div>
+                    <div>${reasonText}</div>
+                </div>
+            `;
+
+            if (everTreated === 'Yes, but discontinued') {
+                const lastTreatment = new Date(form['treatment-date'].value).toLocaleDateString();
+                html += `
+                    <div class="data-row">
+                        <div class="data-label">Last Treatment Date:</div>
+                        <div>${lastTreatment}</div>
+                    </div>
+                `;
+            }
+        }
+
+        if (form['comments'].value.trim()) {
+            html += `
+                <div class="data-row">
+                    <div class="data-label">Comments:</div>
+                    <div>${form['comments'].value}</div>
+                </div>
+            `;
+        }
+
+        modalBody.innerHTML = html;
+        document.getElementById('confirmationModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('confirmationModal').style.display = 'none';
+    }
+
+    function confirmSubmission() {
+        closeModal();
+        alert('Form submitted successfully!');
+        document.getElementById('adherence-form').reset();
+        document.getElementById('study-allocation').textContent = 'Please select a participant to display allocation.';
+    }
+
+    // Form validation
+    document.getElementById('assessment-date').addEventListener('change', function(e) {
+        const selectedDate = new Date(this.value);
+        const today = new Date();
+        const errorElement = document.getElementById('assessment-date-error');
+        
+        selectedDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate > today) {
+            errorElement.style.display = 'block';
+            this.value = '';
+        } else {
+            errorElement.style.display = 'none';
+        }
+    });
+
+    document.getElementById('adherence-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        const assessmentDate = new Date(document.getElementById('assessment-date').value);
+        const today = new Date();
+        
+        assessmentDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        
+        if (assessmentDate > today) {
+            document.getElementById('assessment-date-error').style.display = 'block';
+            return;
+        }
+        
+        const treatmentDate = document.getElementById('treatment-date').value;
+        if (treatmentDate && treatmentDate > document.getElementById('assessment-date').value) {
+            alert("Last known date of treatment cannot be after the date of assessment.");
+            return;
+        }
+
+        showModal();
+    });
+</script>
+
+</body>
+</html>
