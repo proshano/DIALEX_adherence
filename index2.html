@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIALEX Adherence Assessment</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            line-height: 1.4;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            color: #664d03;
+            background-color: #fff3cd;
+            padding: 8px 16px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-switch input[type="checkbox"] {
+            width: 40px;
+            height: 20px;
+            appearance: none;
+            background: #e9ecef;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch input[type="checkbox"]::before {
+            content: '';
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+
+        .toggle-switch input[type="checkbox"]:checked {
+            background: #007bff;
+        }
+
+        .toggle-switch input[type="checkbox"]:checked::before {
+            left: 22px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        th {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-weight: 600;
+        }
+
+        th.wrap-header {
+            white-space: normal;
+            min-width: 200px;
+        }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 20px;
+        }
+
+        .sortable::after {
+            content: '↕️';
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.3;
+        }
+
+        .sortable.asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+
+        .sortable.desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .date-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            white-space: nowrap;
+        }
+
+        .select-input {
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            min-width: 200px;
+            font-size: 14px;
+        }
+
+        .select-input:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            color: #6c757d;
+        }
+
+        .date-input {
+            min-width: 150px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .incomplete-row {
+            background-color: rgba(255, 243, 205, 0.5);
+        }
+
+        .complete-row {
+            background-color: rgba(209, 231, 221, 0.5);
+        }
+
+        .incomplete-hidden {
+            display: none;
+        }
+
+        .assessment-badge {
+            background-color: #007bff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>DIALEX Adherence Assessment</h1>
+            <div class="header-controls">
+                <div class="control-group">
+                    <span class="assessment-badge">Assessment #3</span>
+                    <span>Due: Nov 30, 2024</span>
+                </div>
+                <span id="status-indicator" class="status-indicator">Incomplete records exist</span>
+                <div class="toggle-switch">
+                    <label>
+                        <input type="checkbox" id="show-incomplete" onchange="toggleIncomplete()">
+                        Show Incomplete Only
+                    </label>
+                </div>
+                <button onclick="saveAll()">Save All Changes</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="id">Study ID</th>
+                        <th class="sortable" data-sort="dialyzer">Allocated dialyzer</th>
+                        <th class="sortable" data-sort="adherence">Using allocated?</th>
+                        <th class="wrap-header">Last treatment with allocated <br> dialyzer after randomization</th>
+                        <th>Reason if not using</th>
+                        <th>Comments</th>
+                    </tr>
+                </thead>
+                <tbody id="patient-table-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const dropdownOptions = {
+            reasons: [
+                { value: '', text: 'Select Reason' },
+                { value: 'died', text: 'Died' },
+                { value: 'transplant', text: 'Transplant' },
+                { value: 'pd', text: 'Changed to PD' },
+                { value: 'hdf', text: 'Changed to HDF/HF' },
+                { value: 'home', text: 'Changed to home HD' },
+                { value: 'nocturnal', text: 'Changed to nocturnal HD' },
+                { value: 'recovered', text: 'Recovered kidney function' },
+                { value: 'declined', text: 'Patient declined' },
+                { value: 'left', text: 'Left country' },
+                { value: 'refused', text: 'Refused dialysis' },
+                { value: 'unit', text: 'Changed unit' },
+                { value: 'reaction', text: 'Dialyzer reaction' },
+                { value: 'error', text: 'Enrollment error' },
+                { value: 'none', text: 'No obvious reason' },
+                { value: 'other', text: 'Other' }
+            ]
+        };
+
+        const patients = [
+            { id: '1000001', dialyzer: 'Conventional high-flux' },
+            { id: '1000002', dialyzer: 'Elisio HX' },
+            { id: '1000003', dialyzer: 'Conventional high-flux' },
+            { id: '1000004', dialyzer: 'Elisio HX' },
+            { id: '1000005', dialyzer: 'Conventional high-flux' }
+        ];
+
+        let currentSort = {
+            column: 'id',
+            direction: 'asc'
+        };
+
+        function createRow(patient) {
+            return `
+                <tr class="incomplete-row">
+                    <td>${patient.id}</td>
+                    <td>${patient.dialyzer}</td>
+                    <td>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="adherence-${patient.id}" value="yes" onchange="handleAdherenceChange(this)">
+                                Yes
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="adherence-${patient.id}" value="no" onchange="handleAdherenceChange(this)">
+                                No
+                            </label>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="date-group">
+                            <input type="date" class="select-input date-input" disabled>
+                            <label class="radio-label">
+                                <input type="checkbox" onchange="handleNeverChange(this)" disabled>
+                                Never used
+                            </label>
+                        </div>
+                    </td>
+                    <td>
+                        <select class="select-input" onchange="handleReasonChange(this)" disabled>
+                            ${dropdownOptions.reasons.map(opt => 
+                                `<option value="${opt.value}">${opt.text}</option>`
+                            ).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" class="select-input" placeholder="Add comments..." disabled>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function handleNeverChange(checkbox) {
+            const row = checkbox.closest('tr');
+            const dateInput = row.querySelector('input[type="date"]');
+            dateInput.disabled = checkbox.checked;
+            if (checkbox.checked) {
+                dateInput.value = '';
+            }
+            updateRowStatus(row);
+        }
+
+        function handleAdherenceChange(radio) {
+            const row = radio.closest('tr');
+            const isAdherent = radio.value === 'yes';
+            const inputs = row.querySelectorAll('input[type="date"], input[type="checkbox"], select, input[type="text"]');
+            
+            inputs.forEach(input => {
+                input.disabled = isAdherent;
+                if (isAdherent) {
+                    if (input.type === 'text' || input.type === 'date') input.value = '';
+                    else if (input.type === 'checkbox') input.checked = false;
+                    else if (input.type === 'select-one') input.value = '';
+                }
+            });
+
+            updateRowStatus(row);
+        }
+
+        function handleReasonChange(select) {
+            const row = select.closest('tr');
+            const commentsInput = row.querySelector('input[type="text"]');
+            const requiresComments = ['reaction', 'none', 'other'].includes(select.value);
+            
+            commentsInput.disabled = !requiresComments;
+            if (!requiresComments) {
+                commentsInput.value = '';
+            }
+            
+            updateRowStatus(row);
+        }
+
+        function isRowComplete(row) {
+            const adherenceSelected = row.querySelector('input[type="radio"]:checked');
+            if (!adherenceSelected) return false;
+
+            if (adherenceSelected.value === 'yes') return true;
+
+            const reasonSelect = row.querySelector('select');
+            if (!reasonSelect.value) return false;
+
+            const dateInput = row.querySelector('input[type="date"]');
+            const neverCheckbox = row.querySelector('input[type="checkbox"]');
+            if (!neverCheckbox.checked && !dateInput.value) return false;
+
+            const requiresComments = ['reaction', 'none', 'other'].includes(reasonSelect.value);
+            if (requiresComments && !row.querySelector('input[type="text"]').value.trim()) return false;
+
+            return true;
+        }
+
+        function updateRowStatus(row) {
+            row.className = isRowComplete(row) ? 'complete-row' : 'incomplete-row';
+            updateStatusIndicator();
+        }
+
+        function updateStatusIndicator() {
+            const incompleteExists = Array.from(document.querySelectorAll('#patient-table-body tr'))
+                .some(row => !isRowComplete(row));
+            document.getElementById('status-indicator').style.display = 
+                incompleteExists ? 'block' : 'none';
+        }
+
+        function toggleIncomplete() {
+            const showIncomplete = document.getElementById('show-incomplete').checked;
+            document.querySelectorAll('#patient-table-body tr').forEach(row => {
+                if (showIncomplete) {
+                    row.classList.toggle('incomplete-hidden', isRowComplete(row));
+                } else {
+                    row.classList.remove('incomplete-hidden');
+                }
+            });
+        }
+
+        function saveAll() {
+            const data = Array.from(document.querySelectorAll('#patient-table-body tr')).map(row => {
+                const adherenceRadio = row.querySelector('input[type="radio"]:checked');
+                const rowData = {
+                    studyId: row.cells[0].textContent,
+                    allocatedDialyzer: row.cells[1].textContent,
+                    isAdherent: adherenceRadio ? adherenceRadio.value === 'yes' : null
+                };
+
+                if (rowData.isAdherent === false) {
+                    const neverUsed = row.querySelector('input[type="checkbox"]').checked;
+                    rowData.lastTreatment = neverUsed ? 'never' : row.querySelector('input[type="date"]').value;
+                    rowData.reason = row.querySelector('select').value;
+                    rowData.comments = row.querySelector('input[type="text"]').value;
+                }
+
+                return rowData;
+            });
+
+            console.log('Saving data:', data);
+            alert('Changes saved successfully!');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableBody = document.getElementById('patient-table-body');
+            tableBody.innerHTML = patients.map(createRow).join('');
+            
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.addEventListener('click', () => {
+                    const column = th.dataset.sort;
+                    if (currentSort.column === column) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.column = column;
+                        currentSort.direction = 'asc';
+                    }
+
+                    document.querySelectorAll('th.sortable').forEach(header => {
+                        header.classList.remove('asc', 'desc');
+                    });
+                    th.classList.add(currentSort.direction);
+
+                    const rows = Array.from(tableBody.getElementsByTagName('tr'));
+                    rows.sort((a, b) => {
+                        let aVal = column === 'adherence' ? 
+                            (a.querySelector('input[type="radio"]:checked')?.value || '') :
+                            a.cells[['id','dialyzer'].indexOf(column)].textContent.trim().toLowerCase();
+                        let bVal = column === 'adherence' ?
+                            (b.querySelector('input[type="radio"]:checked')?.value || '') :
+                            b.cells[['id','dialyzer'].indexOf(column)].textContent.trim().toLowerCase();
+                        
+                        return currentSort.direction === 'asc' ? 
+                            (aVal > bVal ? 1 : -1) : 
+                            (aVal < bVal ? 1 : -1);
+                    });
+
+                    tableBody.innerHTML = '';
+                    rows.forEach(row => tableBody.appendChild(row));
+                });
+            });
+
+            document.querySelectorAll('input[type="date"]').forEach(input => {
+                input.max = new Date().toISOString().split('T')[0];
+            });
+
+            updateStatusIndicator();
+        });
+    </script>
+</body>
+</html>
