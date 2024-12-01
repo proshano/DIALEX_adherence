@@ -110,11 +110,6 @@
             font-weight: 600;
         }
 
-        th.wrap-header {
-            white-space: normal;
-            min-width: 200px;
-        }
-
         .sortable {
             cursor: pointer;
             user-select: none;
@@ -155,13 +150,6 @@
             white-space: nowrap;
         }
 
-        .date-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            white-space: nowrap;
-        }
-
         .select-input {
             padding: 8px;
             border: 1px solid #ced4da;
@@ -174,10 +162,6 @@
             background-color: #e9ecef;
             cursor: not-allowed;
             color: #6c757d;
-        }
-
-        .date-input {
-            min-width: 150px;
         }
 
         button {
@@ -241,10 +225,9 @@
                 <thead>
                     <tr>
                         <th class="sortable" data-sort="id">Study ID</th>
-                        <th class="sortable" data-sort="dialyzer">Allocated dialyzer</th>
-                        <th class="sortable" data-sort="adherence">Using allocated?</th>
-                        <th class="wrap-header">Last treatment with allocated <br> dialyzer after randomization</th>
-                        <th>Reason if not using</th>
+                        <th class="sortable" data-sort="dialyzer">Allocated Dialyzer</th>
+                        <th class="sortable" data-sort="adherence">Using allocated dialyzer for <br>in-unit HD (not HDF/HF)?</th>
+                        <th>Reason</th>
                         <th>Comments</th>
                     </tr>
                 </thead>
@@ -258,21 +241,21 @@
         const dropdownOptions = {
             reasons: [
                 { value: '', text: 'Select Reason' },
-                { value: 'died', text: 'Died' },
                 { value: 'transplant', text: 'Transplant' },
                 { value: 'pd', text: 'Changed to PD' },
-                { value: 'hdf', text: 'Changed to HDF/HF' },
                 { value: 'home', text: 'Changed to home HD' },
                 { value: 'nocturnal', text: 'Changed to nocturnal HD' },
+                { value: 'hdf', text: 'Changed to HDF/HF' },
                 { value: 'recovered', text: 'Recovered kidney function' },
                 { value: 'declined', text: 'Patient declined' },
                 { value: 'left', text: 'Left country' },
+                { value: 'died', text: 'Died' },
                 { value: 'refused', text: 'Refused dialysis' },
                 { value: 'unit', text: 'Changed unit' },
                 { value: 'reaction', text: 'Dialyzer reaction' },
                 { value: 'error', text: 'Enrollment error' },
                 { value: 'none', text: 'No obvious reason' },
-                { value: 'other', text: 'Other' }
+                { value: 'other', text: 'Other (specify in comments)' }
             ]
         };
 
@@ -307,15 +290,6 @@
                         </div>
                     </td>
                     <td>
-                        <div class="date-group">
-                            <input type="date" class="select-input date-input" disabled>
-                            <label class="radio-label">
-                                <input type="checkbox" onchange="handleNeverChange(this)" disabled>
-                                Never used
-                            </label>
-                        </div>
-                    </td>
-                    <td>
                         <select class="select-input" onchange="handleReasonChange(this)" disabled>
                             ${dropdownOptions.reasons.map(opt => 
                                 `<option value="${opt.value}">${opt.text}</option>`
@@ -329,26 +303,15 @@
             `;
         }
 
-        function handleNeverChange(checkbox) {
-            const row = checkbox.closest('tr');
-            const dateInput = row.querySelector('input[type="date"]');
-            dateInput.disabled = checkbox.checked;
-            if (checkbox.checked) {
-                dateInput.value = '';
-            }
-            updateRowStatus(row);
-        }
-
         function handleAdherenceChange(radio) {
             const row = radio.closest('tr');
             const isAdherent = radio.value === 'yes';
-            const inputs = row.querySelectorAll('input[type="date"], input[type="checkbox"], select, input[type="text"]');
+            const inputs = row.querySelectorAll('select, input[type="text"]');
             
             inputs.forEach(input => {
                 input.disabled = isAdherent;
                 if (isAdherent) {
-                    if (input.type === 'text' || input.type === 'date') input.value = '';
-                    else if (input.type === 'checkbox') input.checked = false;
+                    if (input.type === 'text') input.value = '';
                     else if (input.type === 'select-one') input.value = '';
                 }
             });
@@ -377,10 +340,6 @@
 
             const reasonSelect = row.querySelector('select');
             if (!reasonSelect.value) return false;
-
-            const dateInput = row.querySelector('input[type="date"]');
-            const neverCheckbox = row.querySelector('input[type="checkbox"]');
-            if (!neverCheckbox.checked && !dateInput.value) return false;
 
             const requiresComments = ['reaction', 'none', 'other'].includes(reasonSelect.value);
             if (requiresComments && !row.querySelector('input[type="text"]').value.trim()) return false;
@@ -421,8 +380,6 @@
                 };
 
                 if (rowData.isAdherent === false) {
-                    const neverUsed = row.querySelector('input[type="checkbox"]').checked;
-                    rowData.lastTreatment = neverUsed ? 'never' : row.querySelector('input[type="date"]').value;
                     rowData.reason = row.querySelector('select').value;
                     rowData.comments = row.querySelector('input[type="text"]').value;
                 }
@@ -470,10 +427,6 @@
                     tableBody.innerHTML = '';
                     rows.forEach(row => tableBody.appendChild(row));
                 });
-            });
-
-            document.querySelectorAll('input[type="date"]').forEach(input => {
-                input.max = new Date().toISOString().split('T')[0];
             });
 
             updateStatusIndicator();
