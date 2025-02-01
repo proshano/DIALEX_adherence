@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Treatment Event Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .input-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .upload-container {
+      border: 2px dashed #ccc;
+      padding: 20px;
+      text-align: center;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .upload-container.dragover {
+      border-color: #4CAF50;
+      background: #e8f5e9;
+    }
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+    }
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2196F3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #2196F3;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background: #f8f9fa;
+    }
+    .button {
+      background: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 0;
+    }
+    .button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .error {
+      color: #f44336;
+      margin: 10px 0;
+    }
+    .hidden {
+      display: none;
+    }
+    #debugLog {
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      padding: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 20px;
+      font-family: monospace;
+    }
+    .search-container {
+      margin-bottom: 20px;
+    }
+    .search-container input {
+      width: 300px;
+      padding: 8px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+<h1>Treatment Event Tracker</h1>
+
+<!-- Enter HCNs -->
+<div class="input-container">
+  <h2>Enter Health Card Numbers</h2>
+  <p>Enter health card numbers (one per line or comma-separated)</p>
+  <textarea id="hcnInput"></textarea>
+</div>
+
+<!-- CSV upload -->
+<div class="upload-container" id="dropZone">
+  <h2>Upload Treatment Events Data</h2>
+  <p>Drag and drop a CSV file here or click to select</p>
+  <input type="file" id="fileInput" accept=".csv" style="display: none">
+  <button class="button" onclick="document.getElementById('fileInput').click()">Select File</button>
+</div>
+
+<div id="error" class="error hidden"></div>
+
+<!-- Results -->
+<div id="results" class="hidden">
+  <!-- Stats -->
+  <div class="stats-container">
+    <div class="stat-card">
+      <div>Patients Examined</div>
+      <div class="stat-number" id="patientsExamined">0</div>
+    </div>
+    <div class="stat-card">
+      <div>Patients Found</div>
+      <div class="stat-number" id="patientsFound">0</div>
+    </div>
+    <div class="stat-card">
+      <div>Total Important Events</div>
+      <div class="stat-number" id="totalEventsCount">0</div>
+    </div>
+    <div class="stat-card">
+      <div>Date Range</div>
+      <div class="stat-number" id="dateRange">-</div>
+    </div>
+  </div>
+
+  <!-- Search box for offline filtering by HCN -->
+  <div class="search-container">
+    <label for="searchBox"><strong>Search HCN:</strong></label>
+    <input type="text" id="searchBox" placeholder="Type to filter..." oninput="filterTable()" />
+  </div>
+
+  <table id="resultsTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Health Card Number</th>
+        <th>MRN</th>
+        <th>Location</th>
+        <th>Modality</th>
+        <th>Event Type</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div id="debugLog" class="hidden">
+  <h3>Debug Log</h3>
+  <pre id="debugContent"></pre>
+</div>
+
+<script>
+// Adjust if CSV headers are on a different line
+const HEADERS_LINE_INDEX = 4; 
+
+// Important event codes
+const IMPORTANT_EVENTS = {
+  'D': 'Patient Deceased',
+  'W': 'Patient Withdrew',
+  'X': 'Lost to Follow-up',
+  'TX': 'Transplanted',
+  'R': 'Recovered',
+  'M': 'Modality Change',
+  'TO': 'Transferred Out of Region',
+};
+
+const LAST_HCN_HEADER = "Latest Known HCN";
+const DATE_HEADER = "Treatment Event Date";
+const LOCATION_HEADER = "Location";
+const EVENT_TYPE_HEADER = "Treatment Event Code";
+const MODALITY_HEADER = "Modality";
+const MRN_HEADER = "MRN";
+
+// Debug logger
+function debugLog(msg) {
+  const debugContent = document.getElementById('debugContent');
+  debugContent.textContent += msg + '\n';
+  document.getElementById('debugLog').classList.remove('hidden');
+}
+
+// Reconstruct multi-line CSV entries
+function reconstructCSVFromLines(lines) {
+  const records = [];
+  let currentLine = '';
+  let quoteCount = 0;
+
+  for (const line of lines) {
+    if (currentLine) {
+      currentLine += '\n' + line;
+    } else {
+      currentLine = line;
+    }
+    quoteCount = (currentLine.match(/"/g) || []).length;
+    if (quoteCount % 2 === 0) {
+      records.push(currentLine);
+      currentLine = '';
+    }
+  }
+  if (currentLine.trim().length > 0) {
+    records.push(currentLine);
+  }
+  return records;
+}
+
+// Split one CSV line
+function parseCSVLine(line) {
+  const results = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      current += char;
+    } else if (char === ',' && !inQuotes) {
+      results.push(current.replace(/^"|"$/g, '').trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  results.push(current.replace(/^"|"$/g, '').trim());
+  return results;
+}
+
+function parseDate(dateStr) {
+  if (!dateStr || !dateStr.trim()) return null;
+  try {
+    const [d, m, y] = dateStr.split('/').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return isNaN(dt.getTime()) ? null : dt;
+  } catch {
+    return null;
+  }
+}
+
+function formatDate(date) {
+  if (!date) return '';
+  return date.toLocaleDateString('en-CA', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+function preventDefaults(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+function showError(msg) {
+  errorDiv.textContent = msg;
+  errorDiv.classList.remove('hidden');
+  resultsDiv.classList.add('hidden');
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r\n|\n/);
+  debugLog(`Original lines in CSV: ${lines.length}`);
+
+  const reconstructed = reconstructCSVFromLines(lines).filter(l => l.trim() !== '');
+  debugLog(`Total lines in CSV: ${reconstructed.length}`);
+
+  if (reconstructed.length <= HEADERS_LINE_INDEX) {
+    debugLog('Not enough lines in the CSV for a header row');
+    return [];
+  }
+
+  const headerRow = parseCSVLine(reconstructed[HEADERS_LINE_INDEX]);
+  const headerIndexes = {};
+  headerRow.forEach((col, i) => {
+    const h = col.replace(/\s+/g, ' ').trim();
+    if (h === LAST_HCN_HEADER) headerIndexes[LAST_HCN_HEADER] = i;
+    else if (h.includes('Treatment Event Date')) headerIndexes[DATE_HEADER] = i;
+    else if (h === LOCATION_HEADER) headerIndexes[LOCATION_HEADER] = i;
+    else if (h === EVENT_TYPE_HEADER) headerIndexes[EVENT_TYPE_HEADER] = i;
+    else if (h === MODALITY_HEADER) headerIndexes[MODALITY_HEADER] = i;
+    else if (h === MRN_HEADER) headerIndexes[MRN_HEADER] = i;
+  });
+
+  debugLog(`Header indexes: ${JSON.stringify(headerIndexes, null, 2)}`);
+
+  const events = [];
+  for (let i = HEADERS_LINE_INDEX + 1; i < reconstructed.length; i++) {
+    const rawLine = reconstructed[i];
+    if (!rawLine.trim()) continue;
+    try {
+      const cols = parseCSVLine(rawLine);
+      if (cols.length < headerRow.length) {
+        debugLog(`Skipping line ${i}: not enough columns.`);
+        continue;
+      }
+      const row = {
+        [LAST_HCN_HEADER]  : cols[headerIndexes[LAST_HCN_HEADER]]  || '',
+        [DATE_HEADER]      : cols[headerIndexes[DATE_HEADER]]      || '',
+        [LOCATION_HEADER]  : cols[headerIndexes[LOCATION_HEADER]]  || '',
+        [EVENT_TYPE_HEADER]: cols[headerIndexes[EVENT_TYPE_HEADER]]|| '',
+        [MODALITY_HEADER]  : cols[headerIndexes[MODALITY_HEADER]]  || '',
+        [MRN_HEADER]       : cols[headerIndexes[MRN_HEADER]]       || ''
+      };
+      if (row[LAST_HCN_HEADER]?.trim()) {
+        events.push(row);
+      }
+    } catch (err) {
+      debugLog(`Error parsing line ${i}: ${err.message}`);
+    }
+  }
+  debugLog(`Parsed events: ${events.length}`);
+  return events;
+}
+
+function processData(csv) {
+  try {
+    const allEvents = parseCSV(csv);
+    const rawHCNList = hcnInput.value
+      .split(/[\n,]/)
+      .map(h => h.trim())
+      .filter(h => h !== '');
+    if (rawHCNList.length === 0) {
+      showError('Please enter at least one health card number');
+      return;
+    }
+
+    // Unique HCNs
+    const uniqueHCNsPasted = Array.from(new Set(rawHCNList));
+    const patientsExamined = uniqueHCNsPasted.length;
+
+    // Keep the order typed (including duplicates, but we only want one row set per unique)
+    const orderedUniqueHCNs = [];
+    const seenSet = new Set();
+    for (const hcn of rawHCNList) {
+      if (!seenSet.has(hcn)) {
+        seenSet.add(hcn);
+        orderedUniqueHCNs.push(hcn);
+      }
+    }
+
+    // All events that match the typed HCNs
+    const foundRecords = allEvents.filter(e => seenSet.has(e[LAST_HCN_HEADER].trim()));
+    const patientsFound = new Set(foundRecords.map(e => e[LAST_HCN_HEADER].trim())).size;
+
+    // Important events for date range & total
+    const allImportantEvents = foundRecords.filter(e => IMPORTANT_EVENTS[e[EVENT_TYPE_HEADER]]);
+    const dateObjs = allImportantEvents
+      .map(e => parseDate(e[DATE_HEADER]))
+      .filter(d => d !== null);
+
+    let earliestDate = '-';
+    let latestDate = '-';
+    if (dateObjs.length > 0) {
+      earliestDate = formatDate(new Date(Math.min(...dateObjs)));
+      latestDate = formatDate(new Date(Math.max(...dateObjs)));
+    }
+
+    // Build table
+    const tbody = document.querySelector('#resultsTable tbody');
+    tbody.innerHTML = '';
+
+    for (const hcn of orderedUniqueHCNs) {
+      const recordsForThisHCN = allEvents.filter(e => e[LAST_HCN_HEADER].trim() === hcn);
+
+      if (recordsForThisHCN.length === 0) {
+        // HCN not in CSV
+        const row = tbody.insertRow();
+        row.insertCell().textContent = '';
+        row.insertCell().textContent = hcn;
+        row.insertCell().textContent = '';
+        row.insertCell().textContent = '';
+        row.insertCell().textContent = '';
+        row.insertCell().textContent = 'No relevant event';
+      } else {
+        // We do have at least 1 record for this HCN
+        // If multiple CSV rows have different MRNs, we'll just use the first row's MRN
+        const firstMRN = recordsForThisHCN[0][MRN_HEADER] || '';
+
+        // Filter out important events
+        const important = recordsForThisHCN.filter(e => IMPORTANT_EVENTS[e[EVENT_TYPE_HEADER]]);
+        // Sort them by date
+        important.sort((a, b) => {
+          const da = parseDate(a[DATE_HEADER]) || 0;
+          const db = parseDate(b[DATE_HEADER]) || 0;
+          return da - db;
+        });
+
+        if (important.length > 0) {
+          // Show all important events
+          for (const ev of important) {
+            const row = tbody.insertRow();
+            row.insertCell().textContent = formatDate(parseDate(ev[DATE_HEADER]));
+            row.insertCell().textContent = hcn;
+            row.insertCell().textContent = ev[MRN_HEADER];
+            row.insertCell().textContent = ev[LOCATION_HEADER];
+            row.insertCell().textContent = ev[MODALITY_HEADER];
+            row.insertCell().textContent = IMPORTANT_EVENTS[ev[EVENT_TYPE_HEADER]];
+          }
+        } else {
+          // Show "No relevant event" but still display the MRN
+          const row = tbody.insertRow();
+          row.insertCell().textContent = '';
+          row.insertCell().textContent = hcn;
+          row.insertCell().textContent = firstMRN;
+          row.insertCell().textContent = '';
+          row.insertCell().textContent = '';
+          row.insertCell().textContent = 'No relevant event';
+        }
+      }
+    }
+
+    // Update stats
+    document.getElementById('patientsExamined').textContent = patientsExamined;
+    document.getElementById('patientsFound').textContent = patientsFound;
+    document.getElementById('totalEventsCount').textContent = allImportantEvents.length;
+    document.getElementById('dateRange').textContent = `${earliestDate} - ${latestDate}`;
+
+    errorDiv.classList.add('hidden');
+    resultsDiv.classList.remove('hidden');
+  } catch (err) {
+    console.error(err);
+    showError('Error processing data: ' + err.message);
+  }
+}
+
+// Table filter by HCN
+function filterTable() {
+  const input = document.getElementById('searchBox').value.toLowerCase();
+  const table = document.getElementById('resultsTable');
+  const rows = table.getElementsByTagName('tr');
+
+  // Start at i=1 to skip the <thead>
+  for (let i = 1; i < rows.length; i++) {
+    const cells = rows[i].getElementsByTagName('td');
+    if (cells.length < 2) continue;
+    const hcnCell = cells[1];
+    if (!hcnCell) continue;
+    const hcnText = hcnCell.textContent.toLowerCase();
+    // Show row if it matches the search, else hide
+    if (hcnText.indexOf(input) > -1) {
+      rows[i].style.display = '';
+    } else {
+      rows[i].style.display = 'none';
+    }
+  }
+}
+
+// DOM elements
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const resultsDiv = document.getElementById('results');
+const errorDiv = document.getElementById('error');
+const hcnInput = document.getElementById('hcnInput');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+  dropZone.addEventListener(evt, preventDefaults, false);
+  document.body.addEventListener(evt, preventDefaults, false);
+});
+['dragenter', 'dragover'].forEach(evt => {
+  dropZone.addEventListener(evt, () => dropZone.classList.add('dragover'), false);
+});
+['dragleave', 'drop'].forEach(evt => {
+  dropZone.addEventListener(evt, () => dropZone.classList.remove('dragover'), false);
+});
+
+dropZone.addEventListener('drop', handleDrop, false);
+fileInput.addEventListener('change', handleFileSelect, false);
+
+function handleDrop(e) {
+  const dt = e.dataTransfer;
+  const file = dt.files[0];
+  handleFile(file);
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  handleFile(file);
+}
+
+function handleFile(file) {
+  if (!file) return;
+  if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+    showError('Please upload a CSV file');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      document.getElementById('debugContent').textContent = '';
+      document.getElementById('debugLog').classList.add('hidden');
+      processData(e.target.result);
+    } catch (err) {
+      showError('Error processing file: ' + err.message);
+    }
+  };
+  reader.onerror = function() {
+    showError('Error reading file');
+  };
+  reader.readAsText(file);
+}
+</script>
+</body>
+</html>

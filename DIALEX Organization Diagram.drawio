@@ -1,0 +1,94 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.8 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.8">
+  <diagram name="Page-1" id="yTGzASOgea65CKGcj_yf">
+    <mxGraphModel dx="1242" dy="907" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-2" value="Site Principal Investigators" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="395" y="250" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-3" value="Project Office Operations Committee&lt;div&gt;(Trial coordinators,&amp;nbsp;&lt;/div&gt;&lt;div&gt;Project Officers,&amp;nbsp;&lt;/div&gt;&lt;div&gt;Principal Investigator)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="380" y="340" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-4" value="&lt;div&gt;Data Monitoring Committee&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="137.5" y="460" width="170" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-6" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0;entryY=1;entryDx=0;entryDy=0;exitX=1;exitY=0;exitDx=0;exitDy=0;strokeColor=#000000;fontColor=#000000;" parent="1" source="I5sw_uTmaOkr9en3O7h7-4" target="I5sw_uTmaOkr9en3O7h7-3" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="230" y="510" as="sourcePoint" />
+            <mxPoint x="280" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-7" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;strokeColor=#000000;fontColor=#000000;" parent="1" source="I5sw_uTmaOkr9en3O7h7-4" target="I5sw_uTmaOkr9en3O7h7-5" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="230" y="560" as="sourcePoint" />
+            <mxPoint x="280" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-8" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;strokeColor=#000000;fontColor=#000000;" parent="1" source="I5sw_uTmaOkr9en3O7h7-5" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="454.5" y="506" as="sourcePoint" />
+            <mxPoint x="454.5" y="426" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;fontColor=#000000;" parent="1" source="I5sw_uTmaOkr9en3O7h7-9" target="I5sw_uTmaOkr9en3O7h7-2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-9" value="Regional Leaders" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="230" y="250" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-5" value="Steering Committee&lt;div&gt;(Study Chair, Principal Investigator, Patient Representatives, Lead Statistician, Project Officers, Regional Leaders, Site Principal Investigators, Expert Advisors)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="340" y="460" width="230" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-11" value="Trial Hospitals (Research personnel)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="560" y="250" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-12" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0;exitDx=0;exitDy=0;strokeColor=#000000;fontColor=#000000;" parent="1" source="I5sw_uTmaOkr9en3O7h7-3" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="520" y="340" as="sourcePoint" />
+            <mxPoint x="560" y="310" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-13" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#000000;fontColor=#000000;" parent="1" source="I5sw_uTmaOkr9en3O7h7-3" target="I5sw_uTmaOkr9en3O7h7-2" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="540" y="350" as="sourcePoint" />
+            <mxPoint x="570" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-15" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;strokeColor=#000000;fontColor=#000000;" parent="1" source="I5sw_uTmaOkr9en3O7h7-9" target="I5sw_uTmaOkr9en3O7h7-3" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="350" y="350" as="sourcePoint" />
+            <mxPoint x="390" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-16" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;strokeColor=#000000;fontColor=#000000;" parent="1" source="I5sw_uTmaOkr9en3O7h7-2" target="I5sw_uTmaOkr9en3O7h7-11" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="520" y="280" as="sourcePoint" />
+            <mxPoint x="570" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-17" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;strokeColor=#000000;fontColor=#000000;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="350" y="280" as="sourcePoint" />
+            <mxPoint x="395" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-19" value="Unblinded Statistician" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="150" y="350" width="145" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-20" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;strokeColor=#000000;fontColor=#000000;" parent="1" source="I5sw_uTmaOkr9en3O7h7-19" target="I5sw_uTmaOkr9en3O7h7-3" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="360" y="470" as="sourcePoint" />
+            <mxPoint x="390" y="430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I5sw_uTmaOkr9en3O7h7-21" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;strokeColor=#000000;fontColor=#000000;" parent="1" source="I5sw_uTmaOkr9en3O7h7-4" target="I5sw_uTmaOkr9en3O7h7-19" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="370" y="480" as="sourcePoint" />
+            <mxPoint x="400" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
