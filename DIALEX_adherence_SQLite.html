@@ -303,7 +303,6 @@
     </div>
 
     <script>
-        // Global variables
         let SQL;
         let db;
         let dbChanged = false;
@@ -314,7 +313,6 @@
             direction: 'asc'
         };
         
-        // Reason options for non-adherence
         const reasonOptions = [
             { value: '', text: 'Select Reason' },
             { value: 'transplant', text: 'Transplant' },
@@ -334,7 +332,6 @@
             { value: 'other', text: 'Other (specify in comments)' }
         ];
         
-        // Initialize SQL.js
         initSqlJs({
             locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
         }).then(function(SQL_) {
@@ -343,7 +340,6 @@
             document.getElementById('load-db-btn').disabled = false;
         });
         
-        // Event listeners
         document.getElementById('create-db-btn').addEventListener('click', createNewDatabase);
         document.getElementById('save-db-btn').addEventListener('click', saveDatabase);
         document.getElementById('load-db-btn').addEventListener('click', () => {
@@ -359,7 +355,6 @@
         });
         document.getElementById('save-assessment-btn').addEventListener('click', saveAssessmentData);
         
-        // Create a new SQLite database
         function createNewDatabase() {
             if (dbChanged && !confirm('You have unsaved changes. Create a new database anyway?')) {
                 return;
@@ -368,7 +363,6 @@
             db = new SQL.Database();
             setupDatabase();
             
-            // Update UI
             document.getElementById('db-status').textContent = 'New database created';
             document.getElementById('db-status').classList.remove('hidden');
             document.getElementById('save-db-btn').disabled = false;
@@ -381,7 +375,6 @@
             dbChanged = false;
         }
         
-        // Set up database tables
         function setupDatabase() {
             db.run(`
                 CREATE TABLE IF NOT EXISTS patient_mapping (
@@ -409,7 +402,6 @@
             `);
         }
         
-        // Save database to file
         function saveDatabase() {
             const data = db.export();
             const blob = new Blob([data], { type: 'application/octet-stream' });
@@ -427,7 +419,6 @@
             document.getElementById('db-status').classList.add('success-indicator');
         }
         
-        // Load database from file
         function loadDatabase(event) {
             if (dbChanged && !confirm('You have unsaved changes. Load a different database anyway?')) {
                 event.target.value = null;
@@ -443,7 +434,6 @@
                 try {
                     db = new SQL.Database(uInt8Array);
                     
-                    // Check if the database has the required tables
                     try {
                         db.run("SELECT count(*) FROM patient_mapping LIMIT 1");
                         db.run("SELECT count(*) FROM dialyzers LIMIT 1");
@@ -460,7 +450,6 @@
                     document.getElementById('mapping-file').disabled = false;
                     document.getElementById('redcap-file').disabled = false;
                     
-                    // Check if we have patient mapping
                     const result = db.exec("SELECT COUNT(*) FROM patient_mapping");
                     if (result[0].values[0][0] > 0) {
                         document.getElementById('assessment-info').classList.remove('hidden');
@@ -480,7 +469,6 @@
             event.target.value = null;
         }
         
-        // Import patient mapping from CSV
         function importPatientMapping(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -494,17 +482,14 @@
                         return;
                     }
                     
-                    // Check if the CSV has the required columns
                     const firstRow = results.data[0];
                     if (!firstRow.study_id || !firstRow.mrn) {
                         alert('CSV must have columns named "study_id" and "mrn".');
                         return;
                     }
                     
-                    // Clear existing mapping
                     db.run("DELETE FROM patient_mapping");
                     
-                    // Insert new mapping
                     const stmt = db.prepare("INSERT INTO patient_mapping (study_id, mrn) VALUES (?, ?)");
                     results.data.forEach(row => {
                         if (row.study_id && row.mrn) {
@@ -528,7 +513,6 @@
             event.target.value = null;
         }
         
-        // Import REDCap data from CSV
         function importRedcapData(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -542,17 +526,14 @@
                         return;
                     }
                     
-                    // Check if the CSV has the required column
                     const firstRow = results.data[0];
                     if (!firstRow.study_id) {
                         alert('CSV must have a column named "study_id".');
                         return;
                     }
                     
-                    // Clear existing dialyzer data
                     db.run("DELETE FROM dialyzers");
                     
-                    // Insert new dialyzer data
                     const stmt = db.prepare("INSERT INTO dialyzers (study_id, allocated_dialyzer) VALUES (?, ?)");
                     results.data.forEach(row => {
                         if (row.study_id) {
@@ -566,7 +547,7 @@
                     document.getElementById('db-status').classList.remove('hidden');
                     document.getElementById('db-status').classList.remove('status-indicator');
                     document.getElementById('db-status').classList.add('success-indicator');
-                    document.getElementById('export-csv-btn').disabled = true; // Initially disabled until all complete
+                    document.getElementById('export-csv-btn').disabled = true;
                     document.getElementById('assessment-info').classList.remove('hidden');
                     document.getElementById('assessment-date').value = assessmentDate;
                     
@@ -581,9 +562,7 @@
             event.target.value = null;
         }
         
-        // Refresh assessment data
         function refreshAssessmentData() {
-            // Get all patients with dialyzer data
             const patientsResult = db.exec(`
                 SELECT d.study_id, d.allocated_dialyzer, m.mrn
                 FROM dialyzers d
@@ -596,7 +575,6 @@
                 return;
             }
             
-            // Get adherence data for the current assessment date
             const adherenceResult = db.exec(`
                 SELECT study_id, is_adherent, reason_code, comments
                 FROM adherence_assessment
@@ -614,7 +592,6 @@
                 });
             }
             
-            // Build patient data
             patientsData = patientsResult[0].values.map(row => {
                 const studyId = row[0];
                 const adherenceData = adherenceMap.get(studyId) || {};
@@ -629,14 +606,12 @@
                 };
             });
             
-            // Sort the data according to current sort settings
             sortPatientData();
             
             renderPatientTable();
             updateCompletionIndicator();
         }
         
-        // Render patient table
         function renderPatientTable() {
             const tableBody = document.getElementById('patient-table-body');
             tableBody.innerHTML = '';
@@ -688,13 +663,11 @@
             document.getElementById('save-assessment-btn').disabled = false;
         }
         
-        // Handle adherence change
         window.handleAdherenceChange = function(index, value) {
             const patient = patientsData[index];
             patient.is_adherent = value;
             
             if (value === 1) {
-                // Reset reason and comments if adherent
                 patient.reason_code = '';
                 patient.comments = '';
             }
@@ -716,7 +689,6 @@
             dbChanged = true;
         };
         
-        // Handle reason change
         window.handleReasonChange = function(index, value) {
             const patient = patientsData[index];
             patient.reason_code = value;
@@ -736,7 +708,6 @@
             dbChanged = true;
         };
         
-        // Handle comments change
         window.handleCommentsChange = function(index, value) {
             const patient = patientsData[index];
             patient.comments = value;
@@ -747,7 +718,6 @@
             dbChanged = true;
         };
         
-        // Check if a row is complete
         function isRowComplete(patient) {
             if (patient.is_adherent === undefined || patient.is_adherent === null) {
                 return false;
@@ -767,12 +737,10 @@
             return true;
         }
         
-        // Update row status
         function updateRowStatus(row, patient) {
             row.className = isRowComplete(patient) ? 'complete-row' : 'incomplete-row';
         }
         
-        // Update completion indicator
         function updateCompletionIndicator() {
             const total = patientsData.length;
             const completed = patientsData.filter(isRowComplete).length;
@@ -788,7 +756,6 @@
                 indicator.classList.add('incomplete');
             }
             
-            // Enable/disable export button based on completion
             const exportBtn = document.getElementById('export-csv-btn');
             if (completed === total && total > 0) {
                 exportBtn.disabled = false;
@@ -799,14 +766,11 @@
             }
         }
         
-        // Save assessment data
         function saveAssessmentData() {
             if (!db) return;
             
-            // Delete existing data for this assessment date
             db.run(`DELETE FROM adherence_assessment WHERE assessment_date = '${assessmentDate}'`);
             
-            // Insert updated data
             const stmt = db.prepare(`
                 INSERT INTO adherence_assessment 
                 (study_id, assessment_date, is_adherent, reason_code, comments) 
@@ -835,11 +799,9 @@
             dbChanged = true;
         }
         
-        // Export data for REDCap
         function exportForRedcap() {
             if (!db) return;
             
-            // Check if all patients have complete data
             const total = patientsData.length;
             const completed = patientsData.filter(isRowComplete).length;
             
@@ -848,10 +810,8 @@
                 return;
             }
             
-            // Save current data first
             saveAssessmentData();
             
-            // Get adherence data
             const result = db.exec(`
                 SELECT d.study_id, d.allocated_dialyzer, a.is_adherent, a.reason_code, a.comments
                 FROM dialyzers d
@@ -865,7 +825,6 @@
                 return;
             }
             
-            // Create CSV content
             const headers = ['study_id', 'allocated_dialyzer', 'is_adherent', 'reason_code', 'comments'];
             
             let csvContent = headers.join(',') + '\n';
@@ -880,7 +839,6 @@
                 csvContent += [studyId, allocatedDialyzer, isAdherent, reasonCode, comments].join(',') + '\n';
             });
             
-            // Create a download link
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -895,18 +853,14 @@
             document.getElementById('db-status').classList.add('success-indicator');
         }
         
-        // Sort table by column
         function sortTable(column) {
             if (currentSort.column === column) {
-                // Toggle direction if already sorted by this column
                 currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
             } else {
-                // Set new sort column and default to ascending
                 currentSort.column = column;
                 currentSort.direction = 'asc';
             }
             
-            // Update sort indicators in UI
             document.querySelectorAll('th').forEach(th => {
                 th.classList.remove('sorted-asc', 'sorted-desc');
             });
@@ -916,12 +870,10 @@
                 sortHeader.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
             }
             
-            // Sort the data and refresh the table
             sortPatientData();
             renderPatientTable();
         }
         
-        // Sort patient data based on current sort settings
         function sortPatientData() {
             const column = currentSort.column;
             const direction = currentSort.direction;
@@ -930,12 +882,10 @@
                 let valueA = a[column] || '';
                 let valueB = b[column] || '';
                 
-                // For numeric sorting (if needed)
                 if (!isNaN(valueA) && !isNaN(valueB)) {
                     valueA = Number(valueA);
                     valueB = Number(valueB);
                 }
-                // For string sorting
                 else if (typeof valueA === 'string' && typeof valueB === 'string') {
                     valueA = valueA.toLowerCase();
                     valueB = valueB.toLowerCase();
