@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIALEX adherence tracker</title>
+    <title>DIALEX Adherence Tracker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
@@ -143,8 +143,15 @@
             cursor: pointer;
             font-weight: 500;
         }
+        
+        button:disabled {
+            background: #c0c0c0;
+            color: #e0e0e0;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
 
-        button:hover {
+        button:hover:not(:disabled) {
             background: #0056b3;
         }
         
@@ -152,7 +159,7 @@
             background: #6c757d;
         }
         
-        button.secondary:hover {
+        button.secondary:hover:not(:disabled) {
             background: #5a6268;
         }
         
@@ -160,7 +167,7 @@
             background: #28a745;
         }
         
-        button.success:hover {
+        button.success:hover:not(:disabled) {
             background: #218838;
         }
         
@@ -176,6 +183,16 @@
             padding: 8px 16px;
             border-radius: 4px;
             font-weight: 500;
+        }
+        
+        .completion-indicator.complete {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+        
+        .completion-indicator.incomplete {
+            background-color: #fff3cd;
+            color: #664d03;
         }
         
         .assessment-badge {
@@ -220,27 +237,27 @@
     <div class="container">
         <div class="header">
             <h1>DIALEX adherence tracker</h1>
-           
             
-
+            <div class="section-header">Database controls</div>
             <div class="database-controls">
-                <button id="create-db-btn">Create New Database</button>
-                <button id="save-db-btn" disabled>Save Database</button>
-                <button id="load-db-btn">Load Database</button>
+                <button id="create-db-btn">Create new database</button>
+                <button id="save-db-btn" disabled>Save database</button>
+                <button id="load-db-btn">Load database</button>
                 <input type="file" id="load-db-file" accept=".db" class="hidden">
                 <span id="db-status" class="status-indicator hidden">No database loaded</span>
             </div>
             
+            <div class="section-header">Patient data management</div>
             <div class="import-controls">
                 <div class="file-input">
-                    <label for="mapping-file">Import Patient ID Mapping (CSV)</label>
+                    <label for="mapping-file">Import patient ID mapping (CSV)</label>
                     <input type="file" id="mapping-file" accept=".csv" disabled>
                 </div>
                 <div class="file-input">
-                    <label for="redcap-file">Import REDCap Study IDs (CSV)</label>
+                    <label for="redcap-file">Import REDCap study IDs (CSV)</label>
                     <input type="file" id="redcap-file" accept=".csv" disabled>
                 </div>
-                <button id="export-csv-btn" class="success" disabled>Export for REDCap</button>
+                <button id="export-csv-btn" class="success" disabled title="Complete all patient assessments before exporting">Export for REDCap</button>
                 <span id="completion-indicator" class="completion-indicator hidden">0% Complete</span>
             </div>
         </div>
@@ -248,19 +265,19 @@
         <div class="instructions">
             <h3>Instructions</h3>
             <ol>
-                <li>Start by clicking "Create New Database" or "Load Database" (if you have a saved file).</li>
+                <li>Start by clicking "Create new database" or "Load database" (if you have a saved file).</li>
                 <li>Import your local patient mapping CSV (with columns: study_id, mrn).</li>
                 <li>Import the REDCap study ID list (current assessment period).</li>
                 <li>Complete the adherence data for each patient.</li>
-                <li>Use "Save Database" frequently to save your progress.</li>
-                <li>When finished, click "Export for REDCap" to generate a REDCap-ready CSV file. This is the file you will upload to REDCap to complete your adherence assessment.</li>
+                <li>Use "Save database" frequently to save your progress.</li>
+                <li>When finished, click "Export for REDCap" to generate a REDCap-ready CSV file.</li>
             </ol>
         </div>
 
         <div id="assessment-info" class="header hidden">
             <div class="header-controls">
                 <div class="control-group">
-                    <span id="assessment-badge" class="assessment-badge">Assessment Period</span>
+                    <span id="assessment-badge" class="assessment-badge">Assessment period</span>
                     <input type="date" id="assessment-date" value="">
                 </div>
                 <button id="save-assessment-btn" disabled>Save Changes</button>
@@ -273,7 +290,7 @@
                     <tr>
                         <th id="sort-study-id">Study ID</th>
                         <th id="sort-mrn">Local MRN</th>
-                        <th id="sort-dialyzer">Allocated Dialyzer</th>
+                        <th id="sort-dialyzer">Allocated dialyzer</th>
                         <th>Using allocated dialyzer?</th>
                         <th>Reason</th>
                         <th>Comments</th>
@@ -549,7 +566,7 @@
                     document.getElementById('db-status').classList.remove('hidden');
                     document.getElementById('db-status').classList.remove('status-indicator');
                     document.getElementById('db-status').classList.add('success-indicator');
-                    document.getElementById('export-csv-btn').disabled = false;
+                    document.getElementById('export-csv-btn').disabled = true; // Initially disabled until all complete
                     document.getElementById('assessment-info').classList.remove('hidden');
                     document.getElementById('assessment-date').value = assessmentDate;
                     
@@ -763,7 +780,23 @@
             
             const indicator = document.getElementById('completion-indicator');
             indicator.textContent = `${percentComplete}% Complete (${completed}/${total})`;
-            indicator.classList.remove('hidden');
+            indicator.classList.remove('hidden', 'complete', 'incomplete');
+            
+            if (completed === total && total > 0) {
+                indicator.classList.add('complete');
+            } else {
+                indicator.classList.add('incomplete');
+            }
+            
+            // Enable/disable export button based on completion
+            const exportBtn = document.getElementById('export-csv-btn');
+            if (completed === total && total > 0) {
+                exportBtn.disabled = false;
+                exportBtn.title = "Export data to REDCap";
+            } else {
+                exportBtn.disabled = true;
+                exportBtn.title = "Complete all patient assessments before exporting";
+            }
         }
         
         // Save assessment data
@@ -805,6 +838,15 @@
         // Export data for REDCap
         function exportForRedcap() {
             if (!db) return;
+            
+            // Check if all patients have complete data
+            const total = patientsData.length;
+            const completed = patientsData.filter(isRowComplete).length;
+            
+            if (completed < total) {
+                alert('Please complete all patient assessments before exporting.');
+                return;
+            }
             
             // Save current data first
             saveAssessmentData();
